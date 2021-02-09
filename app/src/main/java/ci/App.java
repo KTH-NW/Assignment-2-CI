@@ -3,9 +3,22 @@
  */
 package ci;
 
+import java.io.IOException;
+
+import java.net.InetSocketAddress;
+
+import com.sun.net.httpserver.HttpServer;
+
 public class App {
 
     public static void main(String[] args) {
-        System.out.println("Hello, world!");
+		try {                                                                   
+			HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+			server.createContext("/github-webhooks", new CIServer());           
+            server.start();                                                     
+        }                                                                       
+        catch(IOException e) {                                                  
+			System.out.println("Failed to instantiate server.");                
+        } 
     }
 }
