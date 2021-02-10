@@ -31,7 +31,21 @@ public class CIServer implements HttpHandler {
 	 * */
 	public void handle(HttpExchange exchange) throws IOException {
 
-		JSONArray commits = getCommits(exchange);
+		InputStream iStream = exchange.getRequestBody();
+		InputStreamReader iStreamReader = new InputStreamReader(iStream);
+		JSONParser jsonParser = new JSONParser();
+
+		//root of json body
+		JSONObject body = null;
+		try {
+			body = (JSONObject)jsonParser.parse(iStreamReader);
+		}
+		catch(ParseException e) {
+			System.out.println("Failed to parse JSON body.");
+			System.exit(0);
+		}
+
+		JSONArray commits = getCommits(body);
 		ArrayList<Boolean> isBuildSuccessful = buildCommits(commits);
 
 		exchange.sendResponseHeaders(200, 0);
@@ -42,29 +56,9 @@ public class CIServer implements HttpHandler {
 	 * Returns a JSONArray object of commits from the JSON body of a POST request
 	 * See Github push event API for detailed info
 	 * */
-	private static JSONArray getCommits(HttpExchange exchange) {
-	
-		try {
-			//format http json body
-			InputStream iStream = exchange.getRequestBody();
-			InputStreamReader iStreamReader = new InputStreamReader(iStream);
-			JSONParser jsonParser = new JSONParser();
-			JSONObject jsonObject = (JSONObject)jsonParser.parse(iStreamReader);
-
-			//return the commits as a JSONArray object
-			JSONArray commits = (JSONArray)jsonObject.get("commits");
-			return commits;
-		}
-		catch(ParseException e) {
-			System.out.println("Failed to parse JSON body.");
-			System.exit(0);
-		}
-		catch(IOException e) {
-			System.out.println("Failed to parse InputStreamReader.");
-			System.exit(0);
-		}
-
-		return null;
+	private static JSONArray getCommits(JSONObject body) {
+		JSONArray commits = (JSONArray)body.get("commits");
+		return commits;
 	}
 
 	/**
