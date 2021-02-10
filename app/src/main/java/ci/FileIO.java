@@ -8,6 +8,27 @@ public class FileIO {
 
 
 
+    /** Call this function after building the project.
+     *  It creates a log-file with the sha-code, a link to the github-commit, and the build log
+     *  Then it updates the index.html with the new build log
+     * 
+     * @param sha The SHA code for the commit
+     * @param buildLog The build log for the commit
+     */
+    public static void constructLog(String sha, String buildLog){
+        String filepath = "Logs/";
+        File[] pathnames = listFileNames(filepath);
+        
+        String logHTML = createLogHTML(sha, buildLog);
+        int fileNumber = pathnames.length + 1;
+        String filename = fileNumber + ".html";
+        writeToFile(filename,logHTML,filepath);
+        pathnames = listFileNames(filepath);
+
+        String indexHTML = createIndexHTML(pathnames);
+        writeToFile("index.html", indexHTML, "");
+
+    }
 
     /**
      * 
