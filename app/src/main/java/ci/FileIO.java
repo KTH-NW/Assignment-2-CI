@@ -7,6 +7,25 @@ package ci;
 public class FileIO {
 
 
+
+     /**
+     * 
+     * @param sha SHA code for the github commit
+     * @param buildLog The buildlog for the commit
+     * @return The HTML page as a string with the build information, sha, and link to github.
+     */
+    public static String createLogHTML(String sha, String buildLog){
+        StringBuilder sb = new StringBuilder();
+        String link = "https://github.com/DD2480-Group-11/Assignment-2-CI/commit/";
+        
+        sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
+        sb.append("<a href='" + link + sha  + "'>Github Commit</a></br>");
+        sb.append(buildLog);
+        sb.append("</body></html>");
+
+        return sb.toString();
+    }   
+
     /**
      * 
      * @param pathnames Array of Files that the index should link to
