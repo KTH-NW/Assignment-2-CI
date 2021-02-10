@@ -8,6 +8,24 @@ public class FileIO {
 
 
 
+
+    /**
+     * 
+     * @param filename The name of the file that should be written to
+     * @param content The content that should be written to the file
+     * @param filepath The path to where the file should be written.
+     */
+    public static void writeToFile(String filename, String content, String filepath){
+        try{
+            FileWriter fw = new FileWriter(filepath+filename);
+            fw.write(content);
+            fw.close();
+        }catch(IOException e){
+            System.out.print(e);
+        }
+    }
+
+
      /**
      * 
      * @param sha SHA code for the github commit
