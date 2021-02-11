@@ -132,10 +132,10 @@ public class FileIO {
         return sb.toString();
     }
 
-    /**
+    /** Lists the files in the requested folder. Returns an array of the content as a File-array, or null if empty
      * 
      * @param folderPath The folder we want to look at
-     * @return An array of File with all files in the folder
+     * @return An array of File with all files in the folder or an empty array if the folder is empty or the value null if the folder does not exist
      */
     public static File[] listFileNames(String folderPath){
         File[] pathnames;
