@@ -1,5 +1,6 @@
 package ci;
 
+import java.io.InvalidObjectException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -36,8 +37,13 @@ public class FileIO {
         writeToFile(filename,logHTML,filepath);
         pathnames = listFileNames(filepath);
 
-        String indexHTML = createIndexHTML(pathnames);
-        writeToFile("index.html", indexHTML, "");
+        try {
+            String indexHTML = createIndexHTML(pathnames);
+            writeToFile("index.html", indexHTML, "");
+        } catch(IOException e){
+            System.out.println("constructLog exception: createIndexHTML: " + e);
+        }
+
 
     }
 
@@ -76,28 +82,25 @@ public class FileIO {
         return sb.toString();
     }   
 
-    /**
+    /** Creates a top level index file that is populated with links to the log files
      * 
      * @param pathnames Array of Files that the index should link to
      * @return the HTML page as a string
+     * @throws IOException from Files.readAttributes or Paths.get
      */
-    public static String createIndexHTML(File[] pathnames){
+    public static String createIndexHTML(File[] pathnames) throws IOException{
         StringBuilder sb = new StringBuilder();
         
         sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
-        try {
-            for(int i = pathnames.length-1; i >= 0; i--){
-                File pathname = pathnames[i];
-                String url = pathname.toString();
-                BasicFileAttributes attr = Files.readAttributes(Paths.get(url), BasicFileAttributes.class);
-                String linkText = attr.creationTime().toString();
-                sb.append("<a href='" + url + "'>" + linkText + "</a></br>");
-            }
-        } catch(IOException e){
-            return "";
+        
+        for(int i = pathnames.length-1; i >= 0; i--){
+            File pathname = pathnames[i];
+            String url = pathname.toString();
+            BasicFileAttributes attr = Files.readAttributes(Paths.get(url), BasicFileAttributes.class);
+            String linkText = attr.creationTime().toString();
+            sb.append("<a href='" + url + "'>" + linkText + "</a></br>");
         }
         
-
         sb.append("</body></html>");
 
         return sb.toString();
