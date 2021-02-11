@@ -3,10 +3,13 @@ package ci;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.util.ArrayList;
 
 import com.sun.net.httpserver.HttpHandler;
@@ -48,8 +51,96 @@ public class CIServer implements HttpHandler {
 		JSONArray commits = getCommits(body);
 		ArrayList<Boolean> isBuildSuccessful = buildCommits(commits);
 
+		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, GITHUB_TOKEN);
+
 		exchange.sendResponseHeaders(200, 0);
 		return;
+	}
+
+	private static String getRepo(JSONObject obj) {
+		JSONObject repoObj = (JSONObject)obj.get("repository");
+		String repo = (String)repoObj.get("name");
+		return repo;
+	}
+
+	private static String getOwner(JSONObject obj) {
+		JSONObject repoObj = (JSONObject)obj.get("repository");
+		JSONObject ownerObj = (JSONObject)repoObj.get("owner");
+		String owner = (String)ownerObj.get("name");
+		return owner;
+	}
+
+	private static void createCommitStatuses(String repo, String owner, JSONArray commits,
+											 ArrayList<Boolean> isBuildSuccessful, String github_token) 
+	{
+		for(int i = 0; i < commits.size(); i++) {
+			
+			//get sha of commit
+			JSONObject commit = (JSONObject)commits.get(i);
+			String sha = (String)commit.get("id");
+
+			//url for commit status api endpoit
+			URL url = null;
+			try {
+				url = new URL("https://api.github.com/repos/"+owner+"/"+repo+"/statuses/"+sha);
+			}
+			catch(MalformedURLException e) {
+				System.out.println("Provided URL is malformed");
+				System.exit(0);
+			}
+
+			//configure post request
+			HttpURLConnection conn = null;
+			try {
+				conn = (HttpURLConnection)url.openConnection();
+			}
+			catch(IOException e) {
+				System.out.println("Failed to establish HTTP connection.");
+				System.exit(0);
+			}
+			try {
+				conn.setRequestMethod("POST");
+			}
+			catch(ProtocolException e) {
+				System.out.println("Failed to set POST request method.");
+				System.exit(0);
+			}
+			conn.setRequestProperty("accept", "application/vnd.github.v3+json");
+			conn.setRequestProperty("Authorization", "token "+github_token);
+			conn.setDoOutput(true);
+
+			//prepare body
+			JSONObject root = new JSONObject();
+			if(isBuildSuccessful.get(i).booleanValue())
+				root.put("state", "success");
+			else
+				root.put("state", "failure");
+
+			String body = root.toJSONString();
+
+			try {
+				OutputStream os = conn.getOutputStream();
+				byte[] input = body.getBytes("utf-8");
+				os.write(input, 0, input.length);
+				os.flush();
+				os.close();
+			}
+			catch(IOException e) {
+				System.out.println("Could not write POST request body.");
+				System.exit(0);
+			}
+
+			int status = -1;
+			try {
+				status = conn.getResponseCode();
+			}
+			catch(IOException e) {
+				System.out.println("Failed to get connection response code.");
+				System.exit(0);
+			}
+
+			conn.disconnect();
+		}
 	}
 
 	/**
