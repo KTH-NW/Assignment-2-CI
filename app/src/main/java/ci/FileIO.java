@@ -105,30 +105,22 @@ public class FileIO {
     }
 
 
-     /**
+    /** Adds the content of a file to a string and returns it
      * 
      * @param pathname The file that we want to inspect
+     * @throws FileNotFoundException from FileReader
+     * @throws IOException from BufferedReader.readLine()
      * @return The content of the file as a string
      */
-    public static String contentOfFile(File pathname){
+    public static String contentOfFile(File pathname) throws FileNotFoundException, IOException{
         StringBuilder sb = new StringBuilder();
 
-        try{
-            BufferedReader br = new BufferedReader(new FileReader(pathname));
-            String str;
-            while((str = br.readLine()) != null){
-                sb.append(str);
-            }
-            br.close();
+        BufferedReader br = new BufferedReader(new FileReader(pathname));
+        String str;
+        while((str = br.readLine()) != null){
+            sb.append(str);
         }
-        catch(FileNotFoundException e){
-            System.out.println(e);
-            return "";
-        }
-        catch(IOException e){
-            System.out.println(e);
-            return "";
-        }
+        br.close();
         return sb.toString();
     }
 
