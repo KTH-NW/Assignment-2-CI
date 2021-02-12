@@ -66,20 +66,33 @@ public class FileIO {
 
     }
 
-    /** Delete directory and subdirectories and files at specified path
+    /** Creates a folder at specified path
+     * 
+     * @param pathname filepath where the folder should be created
+     * @throws InvalidObjectException throws error if the folder could not be created.
+     */
+    public static void createFolder(String pathname) throws InvalidObjectException{
+        File file = new File(pathname);
+        boolean status = file.mkdir();
+        if(!status){
+            throw new InvalidObjectException("Create Folder exception: Could not create folder.");
+        }
+    }
+
+    /** Delete folder and subfolders and files at specified path
      *  Recursively deletes content of folder before deleting the folder
      * 
      * @param pathname Path to start deleting
      * @throws IOException Thrown if one item cannot be deleted
      */
-    public static void deleteDirectory(String pathname) throws IOException{
+    public static void deleteFolder(String pathname) throws IOException{
         File filepath = new File(pathname);
 
         if(filepath.isDirectory()){
             File[] paths = filepath.listFiles();
             if(paths != null){
                 for(File path : paths){
-                    deleteDirectory(path.toString());
+                    deleteFolder(path.toString());
                 }
             }
         }
