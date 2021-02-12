@@ -38,9 +38,10 @@ public class CIServer implements HttpHandler {
 		GITHUB_TOKEN = System.getenv("GITHUB_TOKEN");
 	}
 
-
 	/**
-	 * Handles a push event
+	 * Handles a push event from github.
+	 *
+	 * @param exchange html exchange of push event. A POST request is sent by github.
 	 * */
 	public void handle(HttpExchange exchange) throws IOException {
 
@@ -66,12 +67,24 @@ public class CIServer implements HttpHandler {
 		return;
 	}
 
+	/**
+	 * Retrieves the repository name from a JSONObject
+	 *
+	 * @param obj a JSONObject, which is the root body of the github POST request.
+	 * @return repository name as string
+	 * */
 	private static String getRepo(JSONObject obj) {
 		JSONObject repoObj = (JSONObject)obj.get("repository");
 		String repo = (String)repoObj.get("name");
 		return repo;
 	}
 
+	/**
+	 * Retrieves the owner name of a repository from a JSONObject
+	 *
+	 * @param obj a JSONObject, which is the root body of the github POST request.
+	 * @return owner name of a repository as string
+	 * */
 	private static String getOwner(JSONObject obj) {
 		JSONObject repoObj = (JSONObject)obj.get("repository");
 		JSONObject ownerObj = (JSONObject)repoObj.get("owner");
@@ -79,9 +92,17 @@ public class CIServer implements HttpHandler {
 		return owner;
 	}
 
-	private static void createCommitStatuses(String repo, String owner, JSONArray commits,
-											 ArrayList<Boolean> isBuildSuccessful, String github_token) 
-	{
+	/**
+	 * Makes a POST request to Github's api endpoint for setting the status of a commit.
+	 *
+	 * @param repo name of repository
+	 * @param owner name of owner of repository
+	 * @param commits a JSONArray object of the commits in the push event
+	 * @param isBuildSuccessful an arraylist of booleans representing whether the commit of an index built successfully
+	 * @param github_token used to authorize the Github user making the request (user hosting the server).
+	 * */
+	private static void createCommitStatuses(String repo, String owner, JSONArray commits, ArrayList<Boolean> isBuildSuccessful, String github_token) {
+
 		for(int i = 0; i < commits.size(); i++) {
 			
 			//get sha of commit
