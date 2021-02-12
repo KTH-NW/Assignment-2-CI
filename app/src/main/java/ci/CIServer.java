@@ -60,6 +60,7 @@ public class CIServer implements HttpHandler {
 
 		JSONArray commits = getCommits(body);
 		ArrayList<Boolean> isBuildSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.BUILD);
+		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.TEST);
 
 		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, GITHUB_TOKEN);
 
