@@ -2,12 +2,17 @@
 package ci;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
@@ -19,156 +24,264 @@ import org.json.simple.parser.ParseException;
 
 public class CIServer implements HttpHandler {
 
+	/**
+	 * Represents action to take for a commit.
+	 * Used to communicate whether a commit should be built or tested.
+	 * */
+	private enum Action {
+		BUILD, TEST;
+	}
+
 	public final String GITHUB_TOKEN;
 
 	CIServer() {
 		GITHUB_TOKEN = System.getenv("GITHUB_TOKEN");
 	}
 
-
 	/**
-	 * Handles a push event
+	 * Handles a push event from github.
+	 *
+	 * @param exchange html exchange of push event. A POST request is sent by github.
 	 * */
 	public void handle(HttpExchange exchange) throws IOException {
 
-		JSONArray commits = getCommits(exchange);
-		ArrayList<Boolean> isBuildSuccessful = buildCommits(commits);
+		InputStream iStream = exchange.getRequestBody();
+		InputStreamReader iStreamReader = new InputStreamReader(iStream);
+		JSONParser jsonParser = new JSONParser();
+
+		//root of json body
+		JSONObject body = null;
+		try {
+			body = (JSONObject)jsonParser.parse(iStreamReader);
+		}
+		catch(ParseException e) {
+			System.exit(0);
+		}
+
+		JSONArray commits = getCommits(body);
+		ArrayList<Boolean> isBuildSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.BUILD);
+		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.TEST);
+
+		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, GITHUB_TOKEN);
 
 		exchange.sendResponseHeaders(200, 0);
 		return;
 	}
 
 	/**
+	 * Retrieves the repository name from a JSONObject
+	 *
+	 * @param obj a JSONObject, which is the root body of the github POST request.
+	 * @return repository name as string
+	 * */
+	private static String getRepo(JSONObject obj) {
+		JSONObject repoObj = (JSONObject)obj.get("repository");
+		String repo = (String)repoObj.get("name");
+		return repo;
+	}
+
+	/**
+	 * Retrieves the owner name of a repository from a JSONObject
+	 *
+	 * @param obj a JSONObject, which is the root body of the github POST request.
+	 * @return owner name of a repository as string
+	 * */
+	private static String getOwner(JSONObject obj) {
+		JSONObject repoObj = (JSONObject)obj.get("repository");
+		JSONObject ownerObj = (JSONObject)repoObj.get("owner");
+		String owner = (String)ownerObj.get("name");
+		return owner;
+	}
+
+	/**
+	 * Makes a POST request to Github's api endpoint for setting the status of a commit.
+	 *
+	 * @param repo name of repository
+	 * @param owner name of owner of repository
+	 * @param commits a JSONArray object of the commits in the push event
+	 * @param isBuildSuccessful an arraylist of booleans representing whether the commit of an index built successfully
+	 * @param github_token used to authorize the Github user making the request (user hosting the server).
+	 * */
+	private static void createCommitStatuses(String repo, String owner, JSONArray commits, ArrayList<Boolean> isBuildSuccessful, String github_token) {
+
+		for(int i = 0; i < commits.size(); i++) {
+			
+			//get sha of commit
+			JSONObject commit = (JSONObject)commits.get(i);
+			String sha = (String)commit.get("id");
+
+			//url for commit status api endpoit
+			URL url = null;
+			try {
+				url = new URL("https://api.github.com/repos/"+owner+"/"+repo+"/statuses/"+sha);
+			}
+			catch(MalformedURLException e) {
+				System.out.println("Provided URL is malformed");
+				System.exit(0);
+			}
+
+			//configure post request
+			HttpURLConnection conn = null;
+			try {
+				conn = (HttpURLConnection)url.openConnection();
+			}
+			catch(IOException e) {
+				System.out.println("Failed to establish HTTP connection.");
+				System.exit(0);
+			}
+			try {
+				conn.setRequestMethod("POST");
+			}
+			catch(ProtocolException e) {
+				System.out.println("Failed to set POST request method.");
+				System.exit(0);
+			}
+			conn.setRequestProperty("accept", "application/vnd.github.v3+json");
+			conn.setRequestProperty("Authorization", "token "+github_token);
+			conn.setDoOutput(true);
+
+			//prepare body
+			JSONObject root = new JSONObject();
+			if(isBuildSuccessful.get(i).booleanValue())
+				root.put("state", "success");
+			else
+				root.put("state", "failure");
+
+			String body = root.toJSONString();
+
+			try {
+				OutputStream os = conn.getOutputStream();
+				byte[] input = body.getBytes("utf-8");
+				os.write(input, 0, input.length);
+				os.flush();
+				os.close();
+			}
+			catch(IOException e) {
+				System.out.println("Could not write POST request body.");
+				System.exit(0);
+			}
+
+			int status = -1;
+			try {
+				status = conn.getResponseCode();
+			}
+			catch(IOException e) {
+				System.out.println("Failed to get connection response code.");
+				System.exit(0);
+			}
+
+			conn.disconnect();
+		}
+	}
+
+	/**
 	 * Returns a JSONArray object of commits from the JSON body of a POST request
 	 * See Github push event API for detailed info
 	 * */
-	private static JSONArray getCommits(HttpExchange exchange) {
-	
-		try {
-			//format http json body
-			InputStream iStream = exchange.getRequestBody();
-			InputStreamReader iStreamReader = new InputStreamReader(iStream);
-			JSONParser jsonParser = new JSONParser();
-			JSONObject jsonObject = (JSONObject)jsonParser.parse(iStreamReader);
-
-			//return the commits as a JSONArray object
-			JSONArray commits = (JSONArray)jsonObject.get("commits");
-			return commits;
-		}
-		catch(ParseException e) {
-			System.out.println("Failed to parse JSON body.");
-			System.exit(0);
-		}
-		catch(IOException e) {
-			System.out.println("Failed to parse InputStreamReader.");
-			System.exit(0);
-		}
-
-		return null;
+	private static JSONArray getCommits(JSONObject body) {
+		JSONArray commits = (JSONArray)body.get("commits");
+		return commits;
 	}
 
 	/**
-	 * Returns an ArrayList of booleans representing whether a commit successfully
-	 * compiles or not.
+	 * Builds or tests each commit sent in a push request.
+	 *
+	 * @param commits a JSONArray of the commits in a push request
+	 * @param owner name of owner of the repository
+	 * @param repo name of the repository
+	 * @param action represents the action to take for a commit. Can be BUILD or TEST.
+	 * @return an arraylist representing whether a commit was built successfully.
+	 *		   Index corresponds to commit in given array.
 	 * */
-	private static ArrayList<Boolean> buildCommits(JSONArray commits) {
+	private static ArrayList<Boolean> processCommits(JSONArray commits, String owner, String repo, Action action) {
 
-		try {
-			//temporarily create builds directory
-			Runtime.getRuntime().exec("mkdir builds");
-		}
-		catch(IOException e) {
-			System.out.println("Failed to create new builds directory.");
-			System.exit(0);
+		ArrayList<Boolean> isSuccessful = new ArrayList<Boolean>();	//wether a build or index at index is successful
+
+		String targetDir = null;
+		switch(action) {
+			case BUILD:	targetDir = "builds";
+			case TEST:	targetDir = "tests";
 		}
 
-		ArrayList<Boolean> didBuild = new ArrayList<Boolean>();
+		try {FileIO.createFolder(targetDir); }
+		catch(InvalidObjectException e) { System.exit(0); }
 
 		for(int i = 0; i < commits.size(); i++) {
-			JSONObject commit = (JSONObject)commits.get(i);
-			String sha = (String)commit.get("id");			//sha of commit
+			JSONObject commitObj = (JSONObject)commits.get(i);
+			String sha = (String)commitObj.get("id");
+			String targetCommitDir = targetDir+"/"+sha;
 
-			didBuild.add(buildCommit(sha));
+			try {FileIO.createFolder(targetCommitDir); }
+			catch(InvalidObjectException e) { System.exit(0); }
+
+			cloneRepo("https://github.com/"+owner+"/"+repo+".git", targetCommitDir);
+
+			String log = processCommit(targetCommitDir, sha, action);
+
+			isSuccessful.add(log.contains("BUILD SUCCESSFUL"));		//true if contains given string
 		}
 
-		try {
-			//clean up created builds directory
-			Runtime.getRuntime().exec("rm -rf builds");
-		}
-		catch(IOException e) {
-			System.out.println("Failed to clean up created builds directory.");
-			System.exit(0);
-		}
+		try { FileIO.deleteFolder(targetDir); }
+		catch(IOException e) { System.exit(0); }
 
-		return didBuild;
+		return isSuccessful;
 	}
 
 	/**
-	 * Returns a boolean value representing whether a specific commit compiles successfully.
-	 * sha parameter is used to locally build the project using the gradle wrapper.
-	 * The output is parsed to determine whether build was successful or not.
+	 * Clone a github repository into a chosen directory.
+	 *
+	 * @param repoName name of repository.
+	 * @param targetDir name of directory that repo is cloned into.
 	 * */
-	private static boolean buildCommit(String sha) {
-
+	private static void cloneRepo(String repoName, String targetDir) {
 		try {
-			//create folder for commit
-			Runtime.getRuntime().exec("mkdir builds/"+sha);
+			Runtime.getRuntime().exec("git clone "+repoName+" "+targetDir);
 		}
 		catch(IOException e) {
-			System.out.println("Failed to create folder for commit.");
+			System.out.println("Failed to clone github repository: "+repoName+" to directory: "+targetDir);
+			System.exit(0);
+		}
+	}
+
+	/**
+	 * Builds or tests an individual commit.
+	 *
+	 * @param dir name of directory where repository exists.
+	 * @param sha string of the sha of the commit.
+	 * @param action determines whether commit should be built or tested.
+	 * @return the log produced while testing or building commit.
+	 * */
+	private static String processCommit(String dir, String sha, Action action) {
+
+		String option = null; //option used with gradle build system. Determines whether repo is built or tests are run
+		switch(action) {
+			case BUILD:	option = "build";
+			case TEST:	option = "test";
+		}
+
+		try {	//set repo to sha version
+			Runtime.getRuntime().exec("git --git-dir "+dir+"/.git reset --hard "+sha);
+		}
+		catch(IOException e) {
+			System.out.println("Failed to set repo to version: "+sha);
 			System.exit(0);
 		}
 
-		try {
-			//clone repo
-			String repo = "https://github.com/DanielH4/Assignment-2-CI.git";
-			Runtime.getRuntime().exec("git clone "+repo+" builds/"+sha);
+		Process process = null;	//stores build action as a process
+		try {					//build or test commit
+			process = Runtime.getRuntime().exec("gradle -p "+dir+" "+option+" --no-daemon");
 		}
 		catch(IOException e) {
-			System.out.println("Failed to clone repo.");
+			System.out.println("Failed to "+option+" "+dir);
 			System.exit(0);
 		}
 
-		try {
-			//set repo to sha version
-			Runtime.getRuntime().exec("git --git-dir builds/"+sha+"/.git reset --hard "+sha);
-		}
-		catch(IOException e) {
-			System.out.println("Failed to set repo to sha version.");
-			System.exit(0);
-		}
-
-		//stores build action as a process
-		Process process = null;
-		try {
-			//build commit
-			process = Runtime.getRuntime().exec("gradle -p builds/"+sha+"/ build");
-		}
-		catch(IOException e) {
-			System.out.println("Failed to build commit.");
-			System.exit(0);
-		}
-
-		//return true if build was successful
+		//retrieve output log
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		return isBuildSuccessful(reader);
-	}
+		String log = reader.lines().collect(Collectors.joining());
 
-	/**
-	 * determine if build was successful based on build output
-	 * */
-	private static boolean isBuildSuccessful(BufferedReader reader) {
-		String line;
-		try {
-			while((line = reader.readLine()) != null) {
-				if(line.contains("BUILD SUCCESSFUL"))
-					return true;
-			}
-		}
-		catch(IOException e) {
-			System.out.println("Failed to read build output.");
-			System.exit(0);
-		}
-		return false;
+		process.destroy();	//clean up created process
+
+		return log;
 	}
 }
