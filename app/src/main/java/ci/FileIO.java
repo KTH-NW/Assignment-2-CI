@@ -34,7 +34,11 @@ public class FileIO {
         String logHTML = createLogHTML(sha, buildLog);
         int fileNumber = pathnames.length + 1;
         String filename = fileNumber + ".html";
-        writeToFile(filename,logHTML,filepath);
+        try{
+            writeToFile(filename,logHTML,filepath);
+        }catch(IOException e){
+            System.out.println("constructLog exception: writeToFile: " + e);
+        }
         pathnames = listFileNames(filepath);
 
         try {
@@ -47,19 +51,40 @@ public class FileIO {
 
     }
 
-    /**
+    /** This function takes a filename and a path and writes the content to that file.
      * 
      * @param filename The name of the file that should be written to
      * @param content The content that should be written to the file
      * @param filepath The path to where the file should be written.
+     * @throws IOException FileWriter
      */
-    public static void writeToFile(String filename, String content, String filepath){
-        try{
-            FileWriter fw = new FileWriter(filepath+filename);
-            fw.write(content);
-            fw.close();
-        }catch(IOException e){
-            System.out.print(e);
+    public static void writeToFile(String filename, String content, String filepath) throws IOException{
+
+        FileWriter fw = new FileWriter(filepath+filename);
+        fw.write(content);
+        fw.close();
+
+    }
+
+    /** Delete directory and subdirectories and files at specified path
+     *  Recursively deletes content of folder before deleting the folder
+     * 
+     * @param pathname Path to start deleting
+     * @throws IOException Thrown if one item cannot be deleted
+     */
+    public static void deleteDirectory(String pathname) throws IOException{
+        File filepath = new File(pathname);
+
+        if(filepath.isDirectory()){
+            File[] paths = filepath.listFiles();
+            if(paths != null){
+                for(File path : paths){
+                    deleteDirectory(path.toString());
+                }
+            }
+        }
+        if(!filepath.delete()) {
+            throw new IOException("deleteDirectory exception: Failure to delete: " + filepath);
         }
     }
 
