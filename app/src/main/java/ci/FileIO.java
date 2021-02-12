@@ -26,30 +26,50 @@ public class FileIO {
      * 
      * @param sha The SHA code for the commit
      * @param buildLog The build log for the commit
+     * @param filepath Path to the folder where the logs are stored
+     * @param link The http-link to the github repo
+     *             Format: "https://github.com/[organisation]]/[repo]]/commit/"
+     *             '/commit/' can be changed to '/tree/' depending on what you want to display
      */
-    public static void constructLog(String sha, String buildLog){
-        String filepath = "Logs/";
+    public static void constructLog(String sha, String buildLog, String filepath, String link){
+        // Check that folder exists and how many files it contains
         File[] pathnames = listFileNames(filepath);
+        int nameOffset = 0;
+        if(pathnames == null){
+            //folder does not exist, create it
+            try{
+                createFolder(filepath);
+            }catch(InvalidObjectException e){
+                System.out.println("constructLog exception: createFolder: " + e);
+                System.exit(0);
+            }
+        }else{
+            nameOffset = pathnames.length;
+        }
         
-        String logHTML = createLogHTML(sha, buildLog);
-        int fileNumber = pathnames.length + 1;
+        // Create the HTML file that represents this build
+        String logHTML = createLogHTML(sha, buildLog, link);
+        int fileNumber = nameOffset + 1;
         String filename = fileNumber + ".html";
         try{
             writeToFile(filename,logHTML,filepath);
         }catch(IOException e){
             System.out.println("constructLog exception: writeToFile: " + e);
+            System.exit(0);
         }
-        pathnames = listFileNames(filepath);
 
+        // Takes the content of filepath and construct the index file
+        pathnames = listFileNames(filepath);
         try {
             String indexHTML = createIndexHTML(pathnames);
             writeToFile("index.html", indexHTML, "");
         } catch(IOException e){
             System.out.println("constructLog exception: createIndexHTML: " + e);
+            System.exit(0);
         }
 
-
     }
+
 
     /** This function takes a filename and a path and writes the content to that file.
      * 
@@ -80,7 +100,7 @@ public class FileIO {
     }
 
     /** Delete folder and subfolders and files at specified path
-     *  Recursively deletes content of folder before deleting the folder
+     *  [Warning] Recursively deletes content of folder before deleting the folder
      * 
      * @param pathname Path to start deleting
      * @throws IOException Thrown if one item cannot be deleted
@@ -108,9 +128,8 @@ public class FileIO {
      * @param buildLog The buildlog for the commit
      * @return The HTML page as a string with the build information, sha, and link to github.
      */
-    public static String createLogHTML(String sha, String buildLog){
+    public static String createLogHTML(String sha, String buildLog, String link){
         StringBuilder sb = new StringBuilder();
-        String link = "https://github.com/DD2480-Group-11/Assignment-2-CI/commit/";
         
         sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
         sb.append("<a href='" + link + sha  + "'>Github Commit</a></br>");
