@@ -296,6 +296,12 @@ public class CIServer implements HttpHandler {
 
 		return log;
 	}
+	/**
+	 * Send email to the branch owner to notify the build results.
+	 * @param owner name of the branch
+	 * @param commits a JSONArray of the commits in a push request
+	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
+	 */
 	private static void sendEmail(String owner, JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
 		final String username = "eternalaudrey@gmail.com";
         final String password = "hmm123,Z";
@@ -333,6 +339,12 @@ public class CIServer implements HttpHandler {
 			System.exit(0);
         }
     }
+	/**
+	 * 
+	 * @param commits a JSONArray of the commits in a push request
+	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
+	 * @return the email context.
+	 */
 	private static String getText(JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
 		String text = "sha + comments + building results"+"\n";		
 		for(int i = 0; i < commits.size(); i++) {
@@ -351,6 +363,11 @@ public class CIServer implements HttpHandler {
 		}
 		return text;
 	}
+	/**
+	 * 
+	 * @param owner the branch owner
+	 * @return the email address of the owner.
+	 */
 	private static String getEmail(String owner){
 		HashMap<String, String> emailMap = new HashMap<String, String>();
 		emailMap.put("Daniel Halvarsson","danhalv@kth.se") ;
