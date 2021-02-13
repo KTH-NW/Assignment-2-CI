@@ -346,13 +346,13 @@ public class CIServer implements HttpHandler {
 	 * @return the email context.
 	 */
 	private static String getText(JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
-		String text = "sha + comments + building results"+"\n";		
+		String text = "sha:  ";		
 		for(int i = 0; i < commits.size(); i++) {
 			JSONObject commit = (JSONObject)commits.get(i);
 			String sha = (String)commit.get("id");			//sha of commit
 			text = text + sha + "\n";
 			String message = (String)commit.get("message");
-			text = text + message + "\n";
+			text = text + "commit information:  "+ message + "\n";
 			if(isBuildSuccessful.get(i) == true){
 				text = text + "Build success!" + "\n";
 			}
