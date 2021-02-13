@@ -303,8 +303,8 @@ public class CIServer implements HttpHandler {
 	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
 	 */
 	private static void sendEmail(String owner, JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
-		final String username = "eternalaudrey@gmail.com";
-        final String password = "hmm123,Z";
+		final String username = "bunnybunny.zhou@gmail.com";
+        final String password = "TheBestGroup11";
 		final String email = getEmail(owner);
 
         Properties props = new Properties();
@@ -323,7 +323,7 @@ public class CIServer implements HttpHandler {
         try {
 
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress("eternalaudrey@gmail.com"));
+            message.setFrom(new InternetAddress("bunnybunny.zhou@gmail.com"));
             message.setRecipients(Message.RecipientType.TO,
                 InternetAddress.parse(email));
             message.setSubject("The build results:");
