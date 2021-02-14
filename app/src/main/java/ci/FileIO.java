@@ -28,19 +28,30 @@ public class FileIO {
      * @param buildLog The build log for the commit
      * @param filepath Path to the folder where the logs are stored
      * @param link The http-link to the github repo
-     *             Format: "https://github.com/[organisation]]/[repo]]/commit/"
-     *             '/commit/' can be changed to '/tree/' depending on what you want to display
+     *             Format: "https://github.com/[organisation]]/[repo]"
      */
     public static void constructLog(String sha, String buildLog, String filepath, String link){
-        // Check that folder exists and how many files it contains
+        // Check that folder exists, this will hold index.html and a subfolder for the buildlogs
         File[] pathnames = listFileNames(filepath);
+        if(pathnames == null){
+            try{
+                createFolder(filepath);
+            }catch(InvalidObjectException e){
+                System.out.println("ConstructLog exception: createFolder 1: " + e);
+            }
+        }
+
+        // The build logs are stored in a subfolder called buildLogs
+        String buildLogPath = filepath + "buildLogs/";
+        pathnames = listFileNames(buildLogPath);
+        //Check if the buildLogs subfolder exist, if not - create it, then count the amount of logs in it
         int nameOffset = 0;
         if(pathnames == null){
             //folder does not exist, create it
             try{
-                createFolder(filepath);
+                createFolder(buildLogPath);
             }catch(InvalidObjectException e){
-                System.out.println("constructLog exception: createFolder: " + e);
+                System.out.println("constructLog exception: createFolder 2: " + e);
                 System.exit(0);
             }
         }else{
@@ -48,21 +59,22 @@ public class FileIO {
         }
         
         // Create the HTML file that represents this build
+        // It links to the commit on github by its sha and link to repo
         String logHTML = createLogHTML(sha, buildLog, link);
         int fileNumber = nameOffset + 1;
         String filename = fileNumber + ".html";
         try{
-            writeToFile(filename,logHTML,filepath);
+            writeToFile(filename,logHTML,buildLogPath);
         }catch(IOException e){
             System.out.println("constructLog exception: writeToFile: " + e);
             System.exit(0);
         }
 
         // Takes the content of filepath and construct the index file
-        pathnames = listFileNames(filepath);
+        pathnames = listFileNames(buildLogPath);
         try {
             String indexHTML = createIndexHTML(pathnames);
-            writeToFile("index.html", indexHTML, "");
+            writeToFile("index.html", indexHTML, filepath);
         } catch(IOException e){
             System.out.println("constructLog exception: createIndexHTML: " + e);
             System.exit(0);
