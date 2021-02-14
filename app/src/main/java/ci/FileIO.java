@@ -162,6 +162,7 @@ public class FileIO {
         
         sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
         
+        // Iterates from the top down so that the newest build is shown at top
         for(int i = pathnames.length-1; i >= 0; i--){
             File pathname = pathnames[i];
             String url = pathname.getAbsolutePath();
