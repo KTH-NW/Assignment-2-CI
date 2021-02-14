@@ -152,7 +152,7 @@ public class FileIO {
         
         for(int i = pathnames.length-1; i >= 0; i--){
             File pathname = pathnames[i];
-            String url = pathname.toString();
+            String url = pathname.getAbsolutePath();
             BasicFileAttributes attr = Files.readAttributes(Paths.get(url), BasicFileAttributes.class);
             String linkText = attr.creationTime().toString();
             sb.append("<a href='" + url + "'>" + linkText + "</a></br>");
