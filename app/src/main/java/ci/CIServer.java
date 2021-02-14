@@ -370,7 +370,7 @@ public class CIServer implements HttpHandler {
 	 */
 	private static String getEmail(String owner){
 		HashMap<String, String> emailMap = new HashMap<String, String>();
-		emailMap.put("Daniel Halvarsson","danhalv@kth.se") ;
+		emailMap.put("DanielH4","danhalv@kth.se") ;
 		emailMap.put("audreyeternal","yuzho@kth.se") ;
 		emailMap.put("nwessman","nwessman@kth.se") ;
 		emailMap.put("HannesSundin","hannessu@kth.se") ;
