@@ -2,7 +2,7 @@
 
 ## Info
 The CI server is built using **Java 11** and [**Gradle 6.8.1**](https://gradle.org/releases/) for building and testing the application. [**ngrok**](https://ngrok.com/) is used to host the server.
-Furthermore, the java library: [json-simple-1.1.1](https://code.google.com/archive/p/json-simple/downloads) is used for processing JSON data.
+Furthermore, some java libraries are included to implement the specific functions: the java library: [json-simple-1.1.1](https://code.google.com/archive/p/json-simple/downloads) is used for processing JSON data; the java libraries: [javax-mail-1.6.2](https://mvnrepository.com/artifact/com.sun.mail/javax.mail/1.6.2) as well as [javax-mail-api-1.6.2](https://mvnrepository.com/artifact/javax.mail/javax.mail-api/1.6.2) are used to send email to notify the branch owner.
 
 ## Setting up the server
 
