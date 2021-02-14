@@ -122,7 +122,7 @@ public class FileIO {
     }
 
 
-     /**
+     /** Create the html file as a String representation that represent the build log by adding a link to the github commit showing the build log
      * 
      * @param sha SHA code for the github commit
      * @param buildLog The buildlog for the commit
@@ -132,12 +132,12 @@ public class FileIO {
         StringBuilder sb = new StringBuilder();
         
         sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
-        sb.append("<a href='" + link + sha  + "'>Github Commit</a></br>");
+        sb.append("<a href='" + link + "/commit/" + sha  + "'>Github Commit</a></br>");
         sb.append(buildLog);
         sb.append("</body></html>");
 
         return sb.toString();
-    }   
+    }     
 
     /** Creates a top level index file that is populated with links to the log files
      * 
