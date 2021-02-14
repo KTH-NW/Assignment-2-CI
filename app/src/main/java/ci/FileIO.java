@@ -26,7 +26,7 @@ public class FileIO {
      * 
      * @param sha The SHA code for the commit
      * @param buildLog The build log for the commit
-     * @param filepath Path to the folder where the logs are stored
+     * @param filepath Path to the parent folder where the logs are stored
      * @param link The http-link to the github repo
      *             Format: "https://github.com/[organisation]]/[repo]"
      */
