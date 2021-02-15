@@ -40,3 +40,11 @@ To build:
 ```
 This is used by the server to verify that commits that are pushed to the Github
 repository compile.
+
+## Hosting build logs online
+
+The build logs are saved on a local folder specified by the user. To host it online run:
+```
+ngrok http -auth="username:password" file:///[path/to/folder]
+```
+-auth flag can be ommited if you do not want to password protect the link.
