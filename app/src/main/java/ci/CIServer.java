@@ -271,13 +271,7 @@ public class CIServer implements HttpHandler {
 			case TEST:	option = "test";
 		}
 
-		try {	//set repo to sha version
-			Runtime.getRuntime().exec("git --git-dir "+dir+"/.git reset --hard "+sha);
-		}
-		catch(IOException e) {
-			System.out.println("Failed to set repo to version: "+sha);
-			System.exit(0);
-		}
+		setRepoVersion(dir, sha);	//set repo version to specified commit
 
 		Process process = null;	//stores build action as a process
 		try {					//build or test commit
@@ -296,6 +290,23 @@ public class CIServer implements HttpHandler {
 
 		return log;
 	}
+
+	/**
+	 * Sets the repository version to the specified commit.
+	 *
+	 * @param dir local directory of the repository
+	 * @param sha sha string of the commit
+	 * */
+	public static void setRepoVersion(String dir, String sha) {
+		try {
+			Runtime.getRuntime().exec("git --git-dir "+dir+"/.git reset --hard "+sha);
+		}
+		catch(IOException e) {
+			System.out.println("Failed to set repo to version: "+sha);
+			System.exit(0);
+		}
+	}
+
 	/**
 	 * Send email to the branch owner to notify the build results.
 	 * @param owner name of the branch
