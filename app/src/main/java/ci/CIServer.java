@@ -86,7 +86,7 @@ public class CIServer implements HttpHandler {
 	 * @param obj a JSONObject, which is the root body of the github POST request.
 	 * @return repository name as string
 	 * */
-	private static String getRepo(JSONObject obj) {
+	public static String getRepo(JSONObject obj) {
 		JSONObject repoObj = (JSONObject)obj.get("repository");
 		String repo = (String)repoObj.get("name");
 		return repo;
@@ -114,10 +114,10 @@ public class CIServer implements HttpHandler {
 	 * @param isBuildSuccessful an arraylist of booleans representing whether the commit of an index built successfully
 	 * @param github_token used to authorize the Github user making the request (user hosting the server).
 	 * */
-	private static void createCommitStatuses(String repo, String owner, JSONArray commits, ArrayList<Boolean> isBuildSuccessful, String github_token) {
+	public static void createCommitStatuses(String repo, String owner, JSONArray commits, ArrayList<Boolean> isBuildSuccessful, String github_token) {
 
 		for(int i = 0; i < commits.size(); i++) {
-			
+
 			//get sha of commit
 			JSONObject commit = (JSONObject)commits.get(i);
 			String sha = (String)commit.get("id");
@@ -190,7 +190,7 @@ public class CIServer implements HttpHandler {
 	 * Returns a JSONArray object of commits from the JSON body of a POST request
 	 * See Github push event API for detailed info
 	 * */
-	private static JSONArray getCommits(JSONObject body) {
+	public static JSONArray getCommits(JSONObject body) {
 		JSONArray commits = (JSONArray)body.get("commits");
 		return commits;
 	}
@@ -205,7 +205,7 @@ public class CIServer implements HttpHandler {
 	 * @return an arraylist representing whether a commit was built successfully.
 	 *		   Index corresponds to commit in given array.
 	 * */
-	private static ArrayList<Boolean> processCommits(JSONArray commits, String owner, String repo, Action action) {
+	public static ArrayList<Boolean> processCommits(JSONArray commits, String owner, String repo, Action action) {
 
 		ArrayList<Boolean> isSuccessful = new ArrayList<Boolean>();	//wether a build or index at index is successful
 
@@ -245,7 +245,7 @@ public class CIServer implements HttpHandler {
 	 * @param repoName name of repository.
 	 * @param targetDir name of directory that repo is cloned into.
 	 * */
-	private static void cloneRepo(String repoName, String targetDir) {
+	public static void cloneRepo(String repoName, String targetDir) {
 		try {
 			Runtime.getRuntime().exec("git clone "+repoName+" "+targetDir);
 		}
@@ -263,7 +263,7 @@ public class CIServer implements HttpHandler {
 	 * @param action determines whether commit should be built or tested.
 	 * @return the log produced while testing or building commit.
 	 * */
-	private static String processCommit(String dir, String sha, Action action) {
+	public static String processCommit(String dir, String sha, Action action) {
 
 		String option = null; //option used with gradle build system. Determines whether repo is built or tests are run
 		switch(action) {
