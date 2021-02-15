@@ -43,8 +43,10 @@ public class CIServer implements HttpHandler {
 	}
 
 	public final String GITHUB_TOKEN;
+	public final String TARGET_DIR;		//directory where build logs are stored
 
-	CIServer() {
+	CIServer(String targetDir) {
+		TARGET_DIR = targetDir;
 		GITHUB_TOKEN = System.getenv("GITHUB_TOKEN");
 	}
 
@@ -331,6 +333,9 @@ public class CIServer implements HttpHandler {
 		//retrieve output log
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String log = reader.lines().collect(Collectors.joining());
+
+		if(action == Action.BUILD)
+			FileIO.constructLog(sha, log, "buildLogs", "https://github.com/DanielH4/Assignment-2-CI");
 
 		process.destroy();	//clean up created process
 

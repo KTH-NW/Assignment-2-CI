@@ -12,9 +12,37 @@ import com.sun.net.httpserver.HttpServer;
 public class App {
 
     public static void main(String[] args) {
+
+		String address = null;
+		String port = null;
+		String targetDir = null;	//directory of build log history
+		String webhookPath = null;	//url path where github webhooks are sent
+
+		for(int i = 0; i < args.length; i++) {
+			switch(args[i]) {
+				case "--address":		address = args[++i];
+										break;
+				case "--port":			port = args[++i];
+										break;
+				case "--target_dir":	targetDir = args[++i];
+										break;
+				case "--webhooks":		webhookPath = args[++i];
+										break;
+			}
+		}
+
+		if(address == null || port == null || targetDir == null || webhookPath == null) {
+			System.out.println("Usage: requires url and port of server to be specified along with destination path of webhooks. Also requires a directory for build log history to be specified.");
+			System.out.println("--address       IPv4 address of server in following format: x.x.x.x or other valid InetAddress format.");
+			System.out.println("--port          port number that server listens to.");
+			System.out.println("--target_dir    directory in which to store history of build logs.");
+			System.out.println("--webhooks		url path where github webhooks should be sent.");
+			System.exit(0);
+		}
+
 		try {                                                                   
-			HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-			server.createContext("/github-webhooks", new CIServer());           
+			HttpServer server = HttpServer.create(new InetSocketAddress(address, Integer.parseInt(port)), 0);
+			server.createContext(webhookPath, new CIServer(targetDir));           
             server.start();                                                     
         }                                                                       
         catch(IOException e) {                                                  
