@@ -281,7 +281,7 @@ public class CIServer implements HttpHandler {
 
 		Process process = null;	//stores build action as a process
 		try {					//build or test commit
-			process = Runtime.getRuntime().exec("gradle -p "+dir+" "+option+" --no-daemon");
+			process = Runtime.getRuntime().exec("gradle -p "+dir+" clean "+option+" --no-daemon");
 		}
 		catch(IOException e) {
 			System.out.println("Failed to "+option+" "+dir);
