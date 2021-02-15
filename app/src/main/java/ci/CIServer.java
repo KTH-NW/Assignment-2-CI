@@ -13,6 +13,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.Properties;
+import java.util.HashMap;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
@@ -21,6 +23,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class CIServer implements HttpHandler {
 
@@ -63,6 +73,8 @@ public class CIServer implements HttpHandler {
 		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.TEST);
 
 		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, GITHUB_TOKEN);
+
+		sendEmail(getOwner(body),commits, isBuildSuccessful);
 
 		exchange.sendResponseHeaders(200, 0);
 		return;
@@ -283,5 +295,87 @@ public class CIServer implements HttpHandler {
 		process.destroy();	//clean up created process
 
 		return log;
+	}
+	/**
+	 * Send email to the branch owner to notify the build results.
+	 * @param owner name of the branch
+	 * @param commits a JSONArray of the commits in a push request
+	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
+	 */
+	private static void sendEmail(String owner, JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
+		final String username = "bunnybunny.zhou@gmail.com";
+        final String password = "TheBestGroup11";
+		final String email = getEmail(owner);
+
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "587");
+
+        Session session = Session.getInstance(props,
+          new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+          });
+		  session.setDebug(true);
+        try {
+
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress("bunnybunny.zhou@gmail.com"));
+            message.setRecipients(Message.RecipientType.TO,
+                InternetAddress.parse(email));
+            message.setSubject("The build results:");
+			String text = getText(commits, isBuildSuccessful);
+            message.setText(text);
+
+            Transport.send(message);
+
+            System.out.println("Mail Sent Successfully");
+
+        } catch (MessagingException e) {
+            System.out.println("Failed to send email.");
+			System.exit(0);
+        }
+    }
+	/**
+	 * 
+	 * @param commits a JSONArray of the commits in a push request
+	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
+	 * @return the email context.
+	 */
+	private static String getText(JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
+		String text = "sha:  ";		
+		for(int i = 0; i < commits.size(); i++) {
+			JSONObject commit = (JSONObject)commits.get(i);
+			String sha = (String)commit.get("id");			//sha of commit
+			text = text + sha + "\n";
+			String message = (String)commit.get("message");
+			text = text + "commit information:  "+ message + "\n";
+			if(isBuildSuccessful.get(i) == true){
+				text = text + "Build success!" + "\n";
+			}
+				else{
+					text = text + "Build failed!" + "\n";	
+			}			
+
+		}
+		return text;
+	}
+	/**
+	 * 
+	 * @param owner the branch owner
+	 * @return the email address of the owner.
+	 */
+	private static String getEmail(String owner){
+		HashMap<String, String> emailMap = new HashMap<String, String>();
+		emailMap.put("DanielH4","danhalv@kth.se") ;
+		emailMap.put("audreyeternal","yuzho@kth.se") ;
+		emailMap.put("nwessman","nwessman@kth.se") ;
+		emailMap.put("HannesSundin","hannessu@kth.se") ;
+		String email = emailMap.get(owner);
+		return email;
+
 	}
 }
