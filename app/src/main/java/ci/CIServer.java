@@ -146,10 +146,22 @@ public class CIServer implements HttpHandler {
 
 			//prepare body
 			JSONObject root = new JSONObject();
-			if(isBuildSuccessful.get(i).booleanValue() && areTestsSuccessful.get(i).booleanValue())
+			if(isBuildSuccessful.get(i).booleanValue() && areTestsSuccessful.get(i).booleanValue()) {
 				root.put("state", "success");
-			else
+				root.put("description", "Build/Test successful");
+			}
+			else if(!isBuildSuccessful.get(i).booleanValue()) {
 				root.put("state", "failure");
+				root.put("description", "Build failed!");
+			}
+			else if(areTestsSuccessful.get(i).booleanValue()) {
+				root.put("state", "failure");
+				root.put("description", "Tests failed!");
+			}
+			else {
+				root.put("state", "error");
+				root.put("description", "Something went wrong with setting the commit status.");
+			}
 
 			String body = root.toJSONString();
 
