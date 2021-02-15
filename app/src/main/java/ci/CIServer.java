@@ -72,7 +72,7 @@ public class CIServer implements HttpHandler {
 		ArrayList<Boolean> isBuildSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.BUILD);
 		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.TEST);
 
-		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, GITHUB_TOKEN);
+		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, areTestsSuccessful, GITHUB_TOKEN);
 
 		sendEmail(getOwner(body),commits, isBuildSuccessful);
 
@@ -114,33 +114,22 @@ public class CIServer implements HttpHandler {
 	 * @param isBuildSuccessful an arraylist of booleans representing whether the commit of an index built successfully
 	 * @param github_token used to authorize the Github user making the request (user hosting the server).
 	 * */
-	private static void createCommitStatuses(String repo, String owner, JSONArray commits, ArrayList<Boolean> isBuildSuccessful, String github_token) {
-
+	private static void createCommitStatuses(String repo, String owner, JSONArray commits, 
+											 ArrayList<Boolean> isBuildSuccessful, 
+											 ArrayList<Boolean> areTestsSuccessful,
+											 String github_token) 
+	{
 		for(int i = 0; i < commits.size(); i++) {
 			
 			//get sha of commit
 			JSONObject commit = (JSONObject)commits.get(i);
 			String sha = (String)commit.get("id");
 
-			//url for commit status api endpoit
-			URL url = null;
-			try {
-				url = new URL("https://api.github.com/repos/"+owner+"/"+repo+"/statuses/"+sha);
-			}
-			catch(MalformedURLException e) {
-				System.out.println("Provided URL is malformed");
-				System.exit(0);
-			}
+			//url for Github's create commit status api endpoit
+			URL url = createURL(owner, repo, sha);
 
-			//configure post request
-			HttpURLConnection conn = null;
-			try {
-				conn = (HttpURLConnection)url.openConnection();
-			}
-			catch(IOException e) {
-				System.out.println("Failed to establish HTTP connection.");
-				System.exit(0);
-			}
+			HttpURLConnection conn = createHttpURLConnection(url);
+			
 			try {
 				conn.setRequestMethod("POST");
 			}
@@ -148,20 +137,23 @@ public class CIServer implements HttpHandler {
 				System.out.println("Failed to set POST request method.");
 				System.exit(0);
 			}
+
+			//set request headers
 			conn.setRequestProperty("accept", "application/vnd.github.v3+json");
 			conn.setRequestProperty("Authorization", "token "+github_token);
-			conn.setDoOutput(true);
+
+			conn.setDoOutput(true);	//allows writing to request body
 
 			//prepare body
 			JSONObject root = new JSONObject();
-			if(isBuildSuccessful.get(i).booleanValue())
+			if(isBuildSuccessful.get(i).booleanValue() && areTestsSuccessful.get(i).booleanValue())
 				root.put("state", "success");
 			else
 				root.put("state", "failure");
 
 			String body = root.toJSONString();
 
-			try {
+			try {	//write to body
 				OutputStream os = conn.getOutputStream();
 				byte[] input = body.getBytes("utf-8");
 				os.write(input, 0, input.length);
@@ -184,6 +176,48 @@ public class CIServer implements HttpHandler {
 
 			conn.disconnect();
 		}
+	}
+
+	/**
+	 * Creates and returns a URL object for Github's api endpoint for creating commit statuses
+	 *
+	 * @param owner name of repo owner
+	 * @param repo name of repository
+	 * @param sha of specific commit
+	 * @return URL object for api endpoint
+	 * */
+	public static URL createURL(String owner, String repo, String sha) {
+
+		URL url = null;
+		try {
+			url = new URL("https://api.github.com/repos/"+owner+"/"+repo+"/statuses/"+sha);
+		}
+		catch(MalformedURLException e) {
+			System.out.println("Provided URL is malformed");
+			System.exit(0);
+		}
+
+		return url;
+	}
+
+	/**
+	 * Create an HTTP connection to an URL object.
+	 *
+	 * @param url target destination of connection
+	 * @return HttpURLConnection object to url destination
+	 * */
+	public static HttpURLConnection createHttpURLConnection(URL url) {
+
+		HttpURLConnection conn = null;
+		try {
+			conn = (HttpURLConnection)url.openConnection();
+		}
+		catch(IOException e) {
+			System.out.println("Failed to establish HTTP connection.");
+			System.exit(0);
+		}
+
+		return conn;
 	}
 
 	/**
