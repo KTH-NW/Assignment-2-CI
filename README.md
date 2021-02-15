@@ -21,9 +21,9 @@ Github webhooks is what allows us to be notified when a github event, such as a 
 
 ## Building and Running the server
 
-To run:
+To run on Socket Address 127.0.0.1:8080, serving Github webhooks to path "/github-webhooks" and logs are saved in "Assignment-2-CI/app/buildLogs":
 ```
-./gradlew run
+./gradlew run --args="--address 127.0.0.1 --port 8080 --target_dir buildLogs --webhooks /github-webhooks" --no-daemon
 ```
 This starts the server. Any triggered events, which are included in our webhook configuration, should now successfully send POST requests to our server on the configured path.
 
