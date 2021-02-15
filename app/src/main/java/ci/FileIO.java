@@ -161,12 +161,12 @@ public class FileIO {
         StringBuilder sb = new StringBuilder();
         
         sb.append("<!DOCTYPE html><html><head><title>Index</title></head><body>");
-        
+
         // Iterates from the top down so that the newest build is shown at top
         for(int i = pathnames.length-1; i >= 0; i--){
             File pathname = pathnames[i];
-            String url = pathname.getAbsolutePath();
-            BasicFileAttributes attr = Files.readAttributes(Paths.get(url), BasicFileAttributes.class);
+            String url = "buildLogs/" + pathname.getName();
+            BasicFileAttributes attr = Files.readAttributes(Paths.get(pathname.getAbsolutePath()), BasicFileAttributes.class);
             String linkText = attr.creationTime().toString();
             sb.append("<a href='" + url + "'>" + linkText + "</a></br>");
         }
