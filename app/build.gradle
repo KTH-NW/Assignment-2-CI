@@ -29,6 +29,10 @@ dependencies {
 
 	// json-simple dependency used to parse json objects in application.
 	compile 'com.googlecode.json-simple:json-simple:1.1.1'
+
+    compile 'javax.mail:javax.mail-api:1.6.2'
+
+    compile 'com.sun.mail:javax.mail:1.6.2'
 }
 
 application {
@@ -39,4 +43,11 @@ application {
 tasks.named('test') {
     // Use junit platform for unit tests.
     useJUnitPlatform()
+    
+    testLogging.showStandardStreams = true
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 }
