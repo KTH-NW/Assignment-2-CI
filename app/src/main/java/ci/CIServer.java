@@ -364,7 +364,7 @@ public class CIServer implements HttpHandler {
 	 * @param commits a JSONArray of the commits in a push request
 	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
 	 */
-	private static void sendEmail(String owner, JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
+	public static void sendEmail(String owner, JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
 		final String username = "bunnybunny.zhou@gmail.com";
         final String password = "TheBestGroup11";
 		final String email = getEmail(owner);
@@ -407,7 +407,7 @@ public class CIServer implements HttpHandler {
 	 * @param isBuildSuccessful an arraylist representing whether a commit was built successfully.
 	 * @return the email context.
 	 */
-	private static String getText(JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
+	public static String getText(JSONArray commits , ArrayList<Boolean> isBuildSuccessful){
 		String text = "sha:  ";		
 		for(int i = 0; i < commits.size(); i++) {
 			JSONObject commit = (JSONObject)commits.get(i);
@@ -430,7 +430,7 @@ public class CIServer implements HttpHandler {
 	 * @param owner the branch owner
 	 * @return the email address of the owner.
 	 */
-	private static String getEmail(String owner){
+	public static String getEmail(String owner){
 		HashMap<String, String> emailMap = new HashMap<String, String>();
 		emailMap.put("DanielH4","danhalv@kth.se") ;
 		emailMap.put("audreyeternal","yuzho@kth.se") ;
