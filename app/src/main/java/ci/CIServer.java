@@ -71,8 +71,8 @@ public class CIServer implements HttpHandler {
 		}
 
 		JSONArray commits = getCommits(body);
-		ArrayList<Boolean> isBuildSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.BUILD);
-		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, getOwner(body), getRepo(body), Action.TEST);
+		ArrayList<Boolean> isBuildSuccessful = processCommits(commits, TARGET_DIR, getOwner(body), getRepo(body), Action.BUILD);
+		ArrayList<Boolean> areTestsSuccessful = processCommits(commits, TARGET_DIR, getOwner(body), getRepo(body), Action.TEST);
 
 		createCommitStatuses(getRepo(body), getOwner(body), commits, isBuildSuccessful, areTestsSuccessful, GITHUB_TOKEN);
 
@@ -253,7 +253,7 @@ public class CIServer implements HttpHandler {
 	 * @return an arraylist representing whether a commit was built successfully.
 	 *		   Index corresponds to commit in given array.
 	 * */
-	public static ArrayList<Boolean> processCommits(JSONArray commits, String owner, String repo, Action action) {
+	public static ArrayList<Boolean> processCommits(JSONArray commits, String buildLogsDir, String owner, String repo, Action action) {
 
 		ArrayList<Boolean> isSuccessful = new ArrayList<Boolean>();	//wether a build or index at index is successful
 
@@ -276,7 +276,7 @@ public class CIServer implements HttpHandler {
 
 			cloneRepo("https://github.com/"+owner+"/"+repo+".git", targetCommitDir);
 
-			String log = processCommit(targetCommitDir, sha, action);
+			String log = processCommit(owner, repo, buildLogsDir, targetCommitDir, sha, action);
 
 			isSuccessful.add(log.contains("BUILD SUCCESSFUL"));		//true if contains given string
 		}
@@ -311,7 +311,7 @@ public class CIServer implements HttpHandler {
 	 * @param action determines whether commit should be built or tested.
 	 * @return the log produced while testing or building commit.
 	 * */
-	public static String processCommit(String dir, String sha, Action action) {
+	public static String processCommit(String owner, String repo, String buildLogsDir, String dir, String sha, Action action) {
 
 		String option = null; //option used with gradle build system. Determines whether repo is built or tests are run
 		switch(action) {
@@ -333,6 +333,9 @@ public class CIServer implements HttpHandler {
 		//retrieve output log
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String log = reader.lines().collect(Collectors.joining());
+
+		if(action == Action.BUILD)
+			FileIO.constructLog(sha, log, buildLogsDir+'/', "https://github.com/"+owner+"/"+repo);
 
 		process.destroy();	//clean up created process
 
