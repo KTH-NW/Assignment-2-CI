@@ -40,6 +40,7 @@ public class App {
 			System.out.println("--port          port number that server listens to.");
 			System.out.println("--target_dir    directory in which to store history of build logs.");
 			System.out.println("--webhooks		url path where github webhooks should be sent.");
+			System.out.println("--project_dir	absolute path of project directory.");
 			System.exit(0);
 		}
 
