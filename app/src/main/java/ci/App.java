@@ -17,6 +17,7 @@ public class App {
 		String port = null;
 		String targetDir = null;	//directory of build log history
 		String webhookPath = null;	//url path where github webhooks are sent
+		String projectDir = null;	//root directory of project. absolute path.
 
 		for(int i = 0; i < args.length; i++) {
 			switch(args[i]) {
@@ -28,10 +29,12 @@ public class App {
 										break;
 				case "--webhooks":		webhookPath = args[++i];
 										break;
+				case "--project_dir":	projectDir = args[++i];
+										break;
 			}
 		}
 
-		if(address == null || port == null || targetDir == null || webhookPath == null) {
+		if(address == null || port == null || targetDir == null || webhookPath == null || projectDir == null) {
 			System.out.println("Usage: requires url and port of server to be specified along with destination path of webhooks. Also requires a directory for build log history to be specified.");
 			System.out.println("--address       IPv4 address of server in following format: x.x.x.x or other valid InetAddress format.");
 			System.out.println("--port          port number that server listens to.");
@@ -43,6 +46,7 @@ public class App {
 		try {                                                                   
 			HttpServer server = HttpServer.create(new InetSocketAddress(address, Integer.parseInt(port)), 0);
 			server.createContext(webhookPath, new CIServer(targetDir));           
+			server.createContext("/", new FileHandler(projectDir, targetDir));
             server.start();                                                     
         }                                                                       
         catch(IOException e) {                                                  
