@@ -334,9 +334,6 @@ public class CIServer implements HttpHandler {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String log = reader.lines().collect(Collectors.joining());
 
-		if(action == Action.BUILD)
-			FileIO.constructLog(sha, log, "buildLogs", "https://github.com/DanielH4/Assignment-2-CI");
-
 		process.destroy();	//clean up created process
 
 		return log;
