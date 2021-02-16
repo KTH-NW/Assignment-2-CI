@@ -2,7 +2,7 @@
 
 ## Info
 The CI server is built using **Java 11** and [**Gradle 6.8.1**](https://gradle.org/releases/) for building and testing the application. [**ngrok**](https://ngrok.com/) is used to host the server.
-Furthermore, the java library: [json-simple-1.1.1](https://code.google.com/archive/p/json-simple/downloads) is used for processing JSON data.
+Furthermore, some java libraries are included to implement the specific functions: the java library: [json-simple-1.1.1](https://code.google.com/archive/p/json-simple/downloads) is used for processing JSON data; the java libraries: [javax-mail-1.6.2](https://mvnrepository.com/artifact/com.sun.mail/javax.mail/1.6.2) as well as [javax-mail-api-1.6.2](https://mvnrepository.com/artifact/javax.mail/javax.mail-api/1.6.2) are used to send email to notify the branch owner.
 
 ## Setting up the server
 
@@ -40,3 +40,11 @@ To build:
 ```
 This is used by the server to verify that commits that are pushed to the Github
 repository compile.
+
+## Hosting build logs online
+
+The build logs are saved on a local folder specified by the user. To host it online run:
+```
+ngrok http -auth="username:password" file:///[path/to/folder]
+```
+-auth flag can be ommited if you do not want to password protect the link.
