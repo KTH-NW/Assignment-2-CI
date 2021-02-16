@@ -43,8 +43,10 @@ public class CIServer implements HttpHandler {
 	}
 
 	public final String GITHUB_TOKEN;
+	public final String TARGET_DIR;		//directory where build logs are stored
 
-	CIServer() {
+	CIServer(String targetDir) {
+		TARGET_DIR = targetDir;
 		GITHUB_TOKEN = System.getenv("GITHUB_TOKEN");
 	}
 
