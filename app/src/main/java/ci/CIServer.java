@@ -32,6 +32,12 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+/**
+ * Continuous integration server implementation. 
+ * Handles push events by Github. 
+ * Compiles/tests commits and generates commit status checks. 
+ * Sends email notifications regarding build status.
+ * */
 public class CIServer implements HttpHandler {
 
 	/**

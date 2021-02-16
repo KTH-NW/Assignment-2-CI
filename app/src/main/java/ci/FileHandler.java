@@ -11,6 +11,9 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+/**
+ * Serves html files to make build history accessible.
+ * */
 public class FileHandler implements HttpHandler {
 
 	private static String PROJECT_DIR;	//root directory. absolute path
@@ -21,12 +24,16 @@ public class FileHandler implements HttpHandler {
 		TARGET_DIR = targetDir;
 	}
 
+	/**
+	 * Handles HTTP traffic on root path and serves relevant html files for build log history.
+	 *
+	 * @param exchange HTTP exchange between user and CIServer
+	 * */
 	public void handle(HttpExchange exchange) throws IOException {
 
-		//String name = new File(exchange.getRequestURI().getPath()).toString();
 		String name = new File(exchange.getRequestURI().getPath()).getName();
 
-		String index_path = PROJECT_DIR+"/app/"+TARGET_DIR+"/index.html";	//index of entire history.
+		String index_path = PROJECT_DIR+"/app/"+TARGET_DIR+"/index.html";			//index of entire history.
 		String commit_path = PROJECT_DIR+"/app/"+TARGET_DIR+"/buildLogs/"+name;		//specific to a saved build. retrieved based on path
 
 		File file = null;
